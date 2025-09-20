@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "mastra": "mastra dev --dir mastra"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",
