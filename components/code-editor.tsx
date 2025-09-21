@@ -181,6 +181,8 @@ sys.stderr.getvalue()
           return <CheckCircle className="w-3 h-3 text-green-600" />;
         case 'error':
           return <AlertCircle className="w-3 h-3 text-red-600" />;
+        default:
+          return <Loader className="w-3 h-3 text-gray-400" />;
       }
     };
 

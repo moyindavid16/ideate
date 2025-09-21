@@ -86,7 +86,7 @@ function tabReducer(state: TabState, action: TabAction): TabState {
       const newTab: Tab = {
         id: Date.now().toString(),
         type,
-        title: type === "visual" ? `canvas ${tabCount}` : type === "code" ? `ide ${tabCount}` : `notes${tabCount}.md`,
+        title: type === "visual" ? `canvas ${tabCount}` : type === "code" ? `ide ${tabCount}` : `notes${tabCount}`,
       };
       return {
         ...state,

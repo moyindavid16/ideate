@@ -60,15 +60,15 @@ const TAB_CONFIGS: TabConfig[] = [
 
 function TabAccordionItem({ config, onCreateTab }: { config: TabConfig; onCreateTab: (type: TabType) => void }) {
   return (
-    <AccordionItem value={config.type} className="border-b-0 mb-3 overflow-visible py-1">
+    <AccordionItem value={config.type} className="border-b-0 mb-3 py-1">
       <AccordionTrigger className={`${config.colorClass} rounded-2xl px-4 py-3 hover:no-underline transition-all duration-300 hover:scale-102 hover:shadow-md`}>
         <div className="flex items-center gap-3">
           {config.icon}
           <span>{config.title}</span>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="px-0 pt-3 overflow-visible">
-        <div className={`bg-white/50 rounded-xl p-4 border border-${config.buttonColor}-200/30 overflow-visible`}>
+      <AccordionContent className="px-0 pt-3">
+        <div className={`bg-white/50 rounded-xl p-4 border border-${config.buttonColor}-200/30`}>
           <div className="flex gap-4">
             <div className={`w-20 h-16 bg-${config.buttonColor}-100 rounded-lg border border-${config.buttonColor}-200/50 flex items-center justify-center text-${config.buttonColor}-600 text-xs`}>
               preview
@@ -79,7 +79,7 @@ function TabAccordionItem({ config, onCreateTab }: { config: TabConfig; onCreate
               </p>
               <button
                 onClick={() => onCreateTab(config.type)}
-                className={`px-4 py-2 bg-${config.buttonColor}-200 hover:bg-${config.buttonColor}-300 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 active:rotate-1 transform`}
+                className="px-4 py-2 bg-green-200 hover:bg-green-300 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95 active:rotate-1 transform"
               >
                 create
               </button>
@@ -104,14 +104,14 @@ export function NewTabPopup({ onCreateTab, children }: NewTabPopupProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sticky-blue max-w-md border-2 border-blue-200/50 animate-in fade-in-0 zoom-in-95 duration-300 overflow-visible">
+      <DialogContent className="sticky-blue max-w-md border-2 border-blue-200/50 animate-in fade-in-0 zoom-in-95 duration-300">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-center">
             new item
           </DialogTitle>
         </DialogHeader>
 
-        <Accordion type="single" collapsible className="w-full overflow-visible">
+        <Accordion type="single" collapsible className="w-full">
           {TAB_CONFIGS.map((config) => (
             <TabAccordionItem key={config.type} config={config} onCreateTab={handleCreateTab} />
           ))}

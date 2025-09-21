@@ -55,7 +55,7 @@ const MainContent = React.memo(({ chatOpen = false, setExcalidrawApiForTab }: Ma
           <VisualCanvas
             tabId={tab.id}
             initialData={tab.excalidrawData}
-            onDataChange={React.useCallback((data) => actions.updateTabData(tab.id, data), [actions, tab.id])}
+            onDataChange={(data) => actions.updateTabData(tab.id, data)}
             setExcalidrawApiForTab={setExcalidrawApiForTab}
           />
         );
@@ -66,7 +66,7 @@ const MainContent = React.memo(({ chatOpen = false, setExcalidrawApiForTab }: Ma
       default:
         return null;
     }
-  }, [actions]);
+  }, [actions, setExcalidrawApiForTab]);
 
   const handleGroupResize = React.useCallback((sizes: number[]) => {
     if (sizes[0] !== undefined && activeTabGroup) {
