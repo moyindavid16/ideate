@@ -38,6 +38,9 @@ export function MainContent({
   const shouldShowGroupView = activeTabGroup && activeTabGroup.tabIds.length === 2;
   const groupTabs = shouldShowGroupView ? tabs.filter(tab => activeTabGroup.tabIds.includes(tab.id)) : [];
 
+  // Check if the tab group contains a markdown editor
+  const groupHasMarkdownEditor = shouldShowGroupView && groupTabs.some(tab => tab.type === 'markdown');
+
   // Debug field for LLM context
   const currentDisplayMode = shouldShowGroupView
     ? `Group View: ${groupTabs[0]?.title} + ${groupTabs[1]?.title}`
@@ -85,7 +88,7 @@ export function MainContent({
         onMouseLeave={() => setIsMainContentHovered(false)}
       >
         <PanelGroup
-          direction={activeTabGroup.direction === "horizontal" ? "vertical" : "horizontal"}
+          direction={activeTabGroup.direction === "vertical" ? "horizontal" : "vertical"}
           onLayout={handleGroupResize}
           className="h-full overflow-visible"
         >
@@ -94,22 +97,22 @@ export function MainContent({
             minSize={10}
             className="relative overflow-visible"
           >
-            <div className={`h-full ml-8 pb-8 main-content-panel overflow-visible ${getTabBackgroundClass(groupTabs[0].type)} transition-transform duration-300 ${
-              activeTabGroup.direction === "horizontal" ? 'rounded-3xl mr-6' : 'rounded-3xl mb-6'
-            } ${chatOpen && activeTabGroup.direction === "vertical" ? 'mr-0' : 'mr-8'} p-4`}>
+            <div className={`h-full ml-8 main-content-panel overflow-visible ${getTabBackgroundClass(groupTabs[0].type)} transition-transform duration-300 ${
+              activeTabGroup.direction === "vertical" ? `rounded-3xl mr-3 ${groupHasMarkdownEditor ? 'pb-0' : 'pb-8'}` : `rounded-3xl mb-3 ${groupHasMarkdownEditor ? 'pb-0' : 'pb-8'}`
+            } ${chatOpen && activeTabGroup.direction === "horizontal" ? 'mr-0' : 'mr-8'} p-4`}>
               {renderTabContent(groupTabs[0])}
             </div>
           </Panel>
 
           <PanelResizeHandle className="relative flex items-center justify-center group">
-            <div className={`${activeTabGroup.direction === "horizontal" ? "w-full h-1" : "w-1 h-full"} bg-border hover:bg-muted-foreground/20 transition-all duration-300 group-hover:${activeTabGroup.direction === "horizontal" ? "h-2" : "w-2"}`} />
-            <button
-              onClick={swapGroupPanes}
-              className="absolute w-6 h-6 rounded-full bg-background border border-border shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground"
-              title="Swap Panes"
-            >
-              <RotateCcw className="w-3 h-3" />
-            </button>
+            <div className={`${activeTabGroup.direction === "vertical" ? "w-1 h-full" : "w-full h-1"} bg-border hover:bg-muted-foreground/20 transition-all duration-300 group-hover:${activeTabGroup.direction === "vertical" ? "w-2" : "h-2"}`} />
+            {/*<button*/}
+            {/*  onClick={swapGroupPanes}*/}
+            {/*  className="absolute w-6 h-6 rounded-full bg-background border border-border shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground"*/}
+            {/*  title="Swap Panes"*/}
+            {/*>*/}
+            {/*  <RotateCcw className="w-3 h-3" />*/}
+            {/*</button>*/}
           </PanelResizeHandle>
 
           <Panel
@@ -118,8 +121,8 @@ export function MainContent({
             className="relative overflow-visible"
           >
             <div className={`h-full main-content-panel overflow-visible ${getTabBackgroundClass(groupTabs[1].type)} transition-transform duration-300 ${
-              activeTabGroup.direction === "horizontal" ? 'rounded-3xl ml-6 mr-8' : 'rounded-3xl mt-6'
-            } ${chatOpen && activeTabGroup.direction === "vertical" ? 'mr-0' : 'mr-8'} p-4`}>
+              activeTabGroup.direction === "vertical" ? `rounded-3xl ml-3 ${groupHasMarkdownEditor ? 'pb-0' : 'pb-8'}` : `rounded-3xl mt-3 ${groupHasMarkdownEditor ? 'pb-0' : 'pb-8'}`
+            } ${chatOpen ? 'mr-0' : 'mr-8'} p-4`}>
               {renderTabContent(groupTabs[1])}
             </div>
           </Panel>

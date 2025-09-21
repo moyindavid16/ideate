@@ -388,7 +388,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col pb-8 overflow-hidden">
       {/* Top Tab Bar */}
-      <div className="bg-background backdrop-blur-sm transition-all duration-300 overflow-visible pt-4">
+      <div className="bg-background backdrop-blur-sm transition-all duration-300 overflow-visible pt-4 antialiased paper-surface">
         {chatOpen ? (
           <div className="flex pt-6 pb-0 relative z-10">
             {/* Left section for tabs - matches main content panel width */}
