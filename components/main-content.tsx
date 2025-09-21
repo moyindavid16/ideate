@@ -7,12 +7,14 @@ import { CodeEditor } from "./code-editor";
 import { MarkdownEditor } from "./markdown-editor";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import type { Tab } from "@/contexts/tab-context";
+import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 interface MainContentProps {
   chatOpen?: boolean;
+  setExcalidrawApiForTab: (tabId: string, api: ExcalidrawImperativeAPI) => void
 }
 
-const MainContent = React.memo(({ chatOpen = false }: MainContentProps) => {
+const MainContent = React.memo(({ chatOpen = false, setExcalidrawApiForTab }: MainContentProps) => {
   const state = useTabState();
   const actions = useTabActions();
   const utils = useTabUtils();
@@ -53,7 +55,8 @@ const MainContent = React.memo(({ chatOpen = false }: MainContentProps) => {
           <VisualCanvas
             tabId={tab.id}
             initialData={tab.excalidrawData}
-            onDataChange={(data) => actions.updateTabData(tab.id, data)}
+            onDataChange={React.useCallback((data) => actions.updateTabData(tab.id, data), [actions, tab.id])}
+            setExcalidrawApiForTab={setExcalidrawApiForTab}
           />
         );
       case "code":

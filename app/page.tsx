@@ -2,17 +2,35 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Panel, PanelGroup, PanelResizeHandle, type ImperativePanelHandle, type ImperativePanelGroupHandle } from "react-resizable-panels";
-import { TabProvider } from "@/contexts/tab-context";
+import { TabProvider, useActiveTab } from "@/contexts/tab-context";
 import { TabBar } from "@/components/tab-bar";
 import { MainContent } from "@/components/main-content";
 import { ChatSidebar } from "@/components/chat-sidebar";
 import ErrorBoundary, { TabErrorBoundary, EditorErrorBoundary } from "@/components/error-boundary";
+import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 export default function OptimizedHome() {
   // Simplified state - only chat-related state remains here
   const [chatOpen, setChatOpen] = useState(true);
   const [chatPanelSize, setChatPanelSize] = useState(25);
   const [lastOpenPanelSize, setLastOpenPanelSize] = useState(25);
+  const [excalidrawApis, setExcalidrawApis] = useState<{[key: string]: ExcalidrawImperativeAPI}>({})
+  const activeTab = useActiveTab()
+  // console.log(excalidrawApis)
+  // console.log(activeTab)
+  // console.log(excalidrawApis[activeTab?.id ?? ''])
+  const activeApi = excalidrawApis[activeTab?.id ?? '']
+  console.log(activeApi)
+
+  const setExcalidrawApiForTab = (tabId: string, api: ExcalidrawImperativeAPI) => {
+    setExcalidrawApis(prev => {
+      console.log(tabId, typeof tabId)
+      return {
+        ...prev,
+        [tabId]: api
+      }
+    })
+  }
 
   // Panel refs for imperative control
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null);
@@ -57,7 +75,6 @@ export default function OptimizedHome() {
 
   return (
       <ErrorBoundary>
-        <TabProvider>
           <div className="h-screen flex flex-col pb-8 overflow-hidden">
             {/* Top Tab Bar */}
             <div className="bg-background backdrop-blur-sm transition-all duration-300 overflow-visible pt-4 antialiased paper-surface">
@@ -85,7 +102,7 @@ export default function OptimizedHome() {
                     className="overflow-visible will-change-width"
                 >
                   <EditorErrorBoundary>
-                    <MainContent chatOpen={chatOpen} />
+                    <MainContent chatOpen={chatOpen} setExcalidrawApiForTab={setExcalidrawApiForTab} />
                   </EditorErrorBoundary>
                 </Panel>
 
@@ -112,7 +129,7 @@ export default function OptimizedHome() {
                           </div>
                         }
                     >
-                      <ChatSidebar isOpen={chatOpen} />
+                      <ChatSidebar api={activeApi} />
                     </ErrorBoundary>
                   </div>
                 </Panel>
@@ -120,7 +137,6 @@ export default function OptimizedHome() {
             </div>
 
           </div>
-        </TabProvider>
       </ErrorBoundary>
   );
 }

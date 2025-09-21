@@ -5,37 +5,73 @@ import { useChat } from "@ai-sdk/react";
 import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import { Thread } from "@/components/assistant-ui/thread";
 import { DefaultChatTransport } from "ai";
-import { Excalidraw, exportToBlob, serializeAsJSON } from "@excalidraw/excalidraw/";
+// import { exportToBlob, serializeAsJSON } from "@excalidraw/excalidraw";
 import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import { useEffect, useState } from "react";
+import { useActiveTab } from "@/contexts/tab-context";
 
 export function ChatSidebar({ api }: { api: ExcalidrawImperativeAPI }) {
+  // console.log("DJDKJD", api);
+  
+  const handleSaveDrawing = async (api: ExcalidrawImperativeAPI) => {
+    console.log("entering handler...")
+    // Import only when you need it
+    const { exportToBlob, serializeAsJSON } = await import("@excalidraw/excalidraw/");
+    console.log("After import")
+    console.log(api)
+    const elements = api.getSceneElements();
+    const appState = api.getAppState();
+    const files = api.getFiles();
+    console.log("Before blobbing")
+    
+    const blob = await exportToBlob({
+      elements,
+      appState,
+      files,
+      mimeType: "image/png"
+    });
+    console.log("got blob...")
+    
+    const drawingJSON = serializeAsJSON(elements, appState, files, "local");
+    
+    // Use blob and jsonData
+    const imageBytes = blob.bytes()
+    return {
+      imageBytes,
+      drawingJSON
+    }
+  };
+
   const chat = useChat({
     transport: new DefaultChatTransport({
-      prepareSendMessagesRequest: async ({ messages }) => {
-        const elements = api.getSceneElements();
-        const appState = api.getAppState();
-        const files = api.getFiles();
+      prepareSendMessagesRequest: async ({ messages, requestMetadata }) => {
+        console.log("preparing request...")
+        // const elements = api.getSceneElements();
+        // const appState = api.getAppState();
+        // const files = api.getFiles();
 
-        const blob:Blob = await exportToBlob({
-          elements, 
-          appState,
-          files,
-          mimeType: "image/png"
-        });
+        // const blob:Blob = await exportToBlob({
+        //   elements, 
+        //   appState,
+        //   files,
+        //   mimeType: "image/png"
+        // });
 
-        const imageBytes = blob.bytes()
+        // const imageBytes = blob.bytes()
 
-        const drawingJSON = serializeAsJSON(elements, appState, files, "local");
-        console.log({
-          prompt: messages[messages.length - 1],
-          imageBytes: imageBytes,
-          drawingJSON: drawingJSON
-        })
+        // const drawingJSON = serializeAsJSON(elements, appState, files, "local");
+        // console.log({
+        //   prompt: messages[messages.length - 1],
+        //   imageBytes: imageBytes,
+        //   drawingJSON: drawingJSON
+        // })
+        const { imageBytes, drawingJSON } = await handleSaveDrawing(api)
+        console.log("data prepared!")
         
         return {
           body: {
-            prompt: messages[messages.length - 1].parts[0].content,
+            prompt: messages[messages.length - 1].parts[0],
             imageBytes: imageBytes,
             drawingJSON: drawingJSON
           }
