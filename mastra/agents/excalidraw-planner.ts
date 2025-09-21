@@ -150,7 +150,7 @@ Any important considerations, styling preferences, or contextual information for
 
 Remember: Your todo lists will guide an AI drawing assistant to create incremental, visible progress. Each step should feel meaningful and move closer to the user's goal while maintaining good UX through manageable chunks of work.
   `,
-  model: google("gemini-2.5-pro"),
+  model: google("gemini-2.5-flash"),
   //   tools: {  },
   defaultGenerateOptions: {
     output: z.object({
