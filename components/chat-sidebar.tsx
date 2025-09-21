@@ -1,84 +1,76 @@
 "use client";
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChat } from "@ai-sdk/react";
-import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
-import { Thread } from "@/components/assistant-ui/thread";
-import { DefaultChatTransport } from "ai";
-// import { exportToBlob, serializeAsJSON } from "@excalidraw/excalidraw";
-import { ExcalidrawElement } from "@excalidraw/excalidraw/element/types";
-import { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
-import { useEffect, useState } from "react";
-import { useActiveTab } from "@/contexts/tab-context";
+import {Thread} from "@/components/assistant-ui/thread";
+import {useChat} from "@ai-sdk/react";
+import {AssistantRuntimeProvider} from "@assistant-ui/react";
+import {useAISDKRuntime} from "@assistant-ui/react-ai-sdk";
+import {DefaultChatTransport} from "ai";
+import type {AppState} from "@excalidraw/excalidraw/types";
 
-export function ChatSidebar({ api }: { api: ExcalidrawImperativeAPI }) {
-  // console.log("DJDKJD", api);
-  
-  const handleSaveDrawing = async (api: ExcalidrawImperativeAPI) => {
-    console.log("entering handler...")
-    // Import only when you need it
-    const { exportToBlob, serializeAsJSON } = await import("@excalidraw/excalidraw/");
-    console.log("After import")
-    console.log(api)
-    const elements = api.getSceneElements();
-    const appState = api.getAppState();
-    const files = api.getFiles();
-    console.log("Before blobbing")
-    
-    const blob = await exportToBlob({
-      elements,
-      appState,
-      files,
-      mimeType: "image/png"
-    });
-    console.log("got blob...")
-    
-    const drawingJSON = serializeAsJSON(elements, appState, files, "local");
-    
-    // Use blob and jsonData
-    const imageBytes = blob.bytes()
-    return {
-      imageBytes,
-      drawingJSON
-    }
-  };
+interface ChatSidebarProps {
+  onGetDrawingData: () => Promise<{imageBytes: Uint8Array | null; drawingJSON: string | null}>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onUpdateScene?: (elements: any[], appState: AppState) => void;
+}
 
+export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps) {
   const chat = useChat({
     transport: new DefaultChatTransport({
-      prepareSendMessagesRequest: async ({ messages, requestMetadata }) => {
-        console.log("preparing request...")
-        // const elements = api.getSceneElements();
-        // const appState = api.getAppState();
-        // const files = api.getFiles();
+      prepareSendMessagesRequest: async ({messages}) => {
+        console.log("preparing request...");
 
-        // const blob:Blob = await exportToBlob({
-        //   elements, 
-        //   appState,
-        //   files,
-        //   mimeType: "image/png"
-        // });
+        try {
+          const {imageBytes, drawingJSON} = await onGetDrawingData();
+          console.log("data prepared!");
 
-        // const imageBytes = blob.bytes()
+          return {
+            body: {
+              prompt: messages[messages.length - 1].parts[0],
+              imageBytes: imageBytes,
+              drawingJSON: drawingJSON,
+            },
+          };
+        } catch (error) {
+          console.error("Failed to get drawing data:", error);
+          // Fallback: send message without drawing data
+          return {
+            body: {
+              prompt: messages[messages.length - 1].parts[0],
+              imageBytes: null,
+              drawingJSON: null,
+            },
+          };
+        }
+      },
+    }),
 
-        // const drawingJSON = serializeAsJSON(elements, appState, files, "local");
-        // console.log({
-        //   prompt: messages[messages.length - 1],
-        //   imageBytes: imageBytes,
-        //   drawingJSON: drawingJSON
-        // })
-        const { imageBytes, drawingJSON } = await handleSaveDrawing(api)
-        console.log("data prepared!")
-        
-        return {
-          body: {
-            prompt: messages[messages.length - 1].parts[0],
-            imageBytes: imageBytes,
-            drawingJSON: drawingJSON
-          }
+    onData: dataPart => {
+      // Handle all data parts as they arrive (including transient parts)
+      console.log("Received data part:", dataPart.data);
+
+      if (dataPart.type === "data-excalidraw-json") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = dataPart.data as {elements: any[]; appState: AppState};
+        const elements = data.elements;
+        const appState = data.appState;
+
+        // Update the Excalidraw scene with the new data
+        if (onUpdateScene) {
+          onUpdateScene(elements, appState);
         }
       }
-    })
-  })
+
+      // // Handle different data part types
+      // if (dataPart.type === 'data-weather') {
+      //   console.log('Weather update:', dataPart.data);
+      // }
+
+      // // Handle transient notifications (ONLY available here, not in message.parts)
+      // if (dataPart.type === 'data-notification') {
+      //   showToast(dataPart.data.message, dataPart.data.level);
+      // }
+    },
+  });
 
   const runtime = useAISDKRuntime(chat);
 

@@ -94,7 +94,7 @@ If the current step is unclear or impossible to execute:
 
 Execute the current step precisely and return the updated JSON.
   `,
-  model: google("gemini-2.5-flash"),
+  model: google("gemini-2.5-pro"),
   //   tools: {  },
   memory: new Memory({
     storage: new LibSQLStore({
