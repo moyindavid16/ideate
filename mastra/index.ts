@@ -8,10 +8,11 @@ import { excalidrawSummarizerAgent } from './agents/excalidraw-summarizer';
 import { excalidrawGeneratorAgent } from './agents/excalidraw-generator';
 import { excalidrawPlannerAgent } from './agents/excalidraw-planner';
 import { excalidrawMarkdownAgent } from './agents/excalidraw-md';
+import { coderAgent } from './agents/coder';
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow },
-  agents: { weatherAgent, excalidrawSummarizerAgent, excalidrawGeneratorAgent, excalidrawPlannerAgent, excalidrawMarkdownAgent },
+  agents: { weatherAgent, excalidrawSummarizerAgent, excalidrawGeneratorAgent, excalidrawPlannerAgent, excalidrawMarkdownAgent, coderAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
     url: ":memory:",

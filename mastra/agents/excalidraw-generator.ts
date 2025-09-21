@@ -1,9 +1,7 @@
-import {google} from "@ai-sdk/google";
-import {Agent} from "@mastra/core/agent";
-import {Memory} from "@mastra/memory";
-import {LibSQLStore} from "@mastra/libsql";
-import {readFileSync} from "fs";
-import excalidrawSummarizerPrompt from "../system-prompts/excalidraw-summarizer.md";
+import { google } from "@ai-sdk/google";
+import { Agent } from "@mastra/core/agent";
+import { LibSQLStore } from "@mastra/libsql";
+import { Memory } from "@mastra/memory";
 // import { weatherTool } from '../tools/weather-tool';
 
 export const excalidrawGeneratorAgent = new Agent({

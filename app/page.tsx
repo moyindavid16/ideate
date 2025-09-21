@@ -8,7 +8,7 @@ import {
   type ImperativePanelHandle,
   type ImperativePanelGroupHandle,
 } from "react-resizable-panels";
-import {useActiveTab} from "@/contexts/tab-context";
+import {Tab, useActiveTab} from "@/contexts/tab-context";
 import {TabBar} from "@/components/tab-bar";
 import {MainContent} from "@/components/main-content";
 import {ChatSidebar} from "@/components/chat-sidebar";
@@ -28,6 +28,7 @@ export default function OptimizedHome() {
 
   // Ref to hold the current API
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
+  const activeTabRef = useRef<Tab | null>(null);
 
   // Update ref when active tab changes
   useEffect(() => {
@@ -35,6 +36,9 @@ export default function OptimizedHome() {
       apiRef.current = excalidrawApis[activeTab.id];
     } else {
       apiRef.current = null;
+    }
+    if (activeTab?.id) {
+      activeTabRef.current = activeTab;
     }
   }, [activeTab?.id, excalidrawApis]);
 
@@ -51,6 +55,10 @@ export default function OptimizedHome() {
       console.warn("Cannot update scene - API not available");
     }
   }, []);
+
+  const getActiveTab = useCallback(() => {
+    return activeTabRef.current!;
+  }, [activeTabRef]);
 
   // Function to get drawing data using the ref
   const getDrawingData = useCallback(async () => {
@@ -201,7 +209,7 @@ export default function OptimizedHome() {
                     </div>
                   }
                 >
-                  <ChatSidebar onGetDrawingData={getDrawingData} onUpdateScene={updateScene} />
+                  <ChatSidebar onGetDrawingData={getDrawingData} onUpdateScene={updateScene} getActiveTab={getActiveTab} />
                 </ErrorBoundary>
               </div>
             </Panel>

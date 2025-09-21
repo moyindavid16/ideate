@@ -1,36 +1,47 @@
 "use client";
 
 import {Thread} from "@/components/assistant-ui/thread";
+import {Tab} from "@/contexts/tab-context";
 import {useChat} from "@ai-sdk/react";
 import {AssistantRuntimeProvider} from "@assistant-ui/react";
 import {useAISDKRuntime} from "@assistant-ui/react-ai-sdk";
-import {DefaultChatTransport} from "ai";
 import type {AppState} from "@excalidraw/excalidraw/types";
-import {useEffect, useRef} from "react";
-import { Tab } from "@/contexts/tab-context";
-
+import {DefaultChatTransport} from "ai";
 
 interface ChatSidebarProps {
   onGetDrawingData: () => Promise<{imageBytes: Uint8Array | null; drawingJSON: string | null}>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdateScene?: (elements: any[], appState: AppState) => void;
-  activeTab: Tab;
+  getActiveTab: () => Tab;
 }
 
-export function ChatSidebar({onGetDrawingData, onUpdateScene, activeTab}: ChatSidebarProps) {
+export function ChatSidebar({onGetDrawingData, onUpdateScene, getActiveTab}: ChatSidebarProps) {
   const chat = useChat({
     transport: new DefaultChatTransport({
       prepareSendMessagesRequest: async ({messages}) => {
         console.log("preparing request...");
+        console.log(getActiveTab());
+        const activeTab = getActiveTab();
 
         if (activeTab.type == "markdown") {
-            return {
-              body: {
-                prompt: messages[messages.length - 1].parts[0],
-                type: activeTab.type,
-                markdownData: activeTab.markdownData
-              }
-            }
+          console.log(activeTab.markdownData);
+          return {
+            body: {
+              prompt: messages[messages.length - 1].parts[0],
+              type: activeTab.type,
+              markdownData: activeTab.markdownData,
+            },
+          };
+        }
+
+        if (activeTab.type == "code") {
+          return {
+            body: {
+              prompt: messages[messages.length - 1].parts[0],
+              type: activeTab.type,
+              currentCode: activeTab.codeData,
+            },
+          };
         }
 
         try {
@@ -42,7 +53,7 @@ export function ChatSidebar({onGetDrawingData, onUpdateScene, activeTab}: ChatSi
               prompt: messages[messages.length - 1].parts[0],
               imageBytes: imageBytes,
               drawingJSON: drawingJSON,
-              type: activeTab.type
+              type: activeTab.type,
             },
           };
         } catch (error) {
@@ -53,7 +64,7 @@ export function ChatSidebar({onGetDrawingData, onUpdateScene, activeTab}: ChatSi
               prompt: messages[messages.length - 1].parts[0],
               imageBytes: null,
               drawingJSON: null,
-              type: activeTab.type
+              type: activeTab.type,
             },
           };
         }
