@@ -324,16 +324,16 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
 
-  /* Accordion animations */
-  @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
-  }
+  /*!* Accordion animations *!*/
+  /*@keyframes accordion-down {*/
+  /*  from { height: 0; }*/
+  /*  to { height: var(--radix-accordion-content-height); }*/
+  /*}*/
 
-  @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
-  }
+  /*@keyframes accordion-up {*/
+  /*  from { height: var(--radix-accordion-content-height); }*/
+  /*  to { height: 0; }*/
+  /*}*/
 
 
   .main-panel {
@@ -558,5 +558,10 @@
 
   .code-editor-panels[data-panel] {
     overflow: hidden !important;
+  }
+
+  /* Chat panel specific overflow */
+  .chat-panel-container[data-panel] {
+    overflow-y: auto !important;
   }
 }

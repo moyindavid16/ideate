@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useImperativeHandle, forwardRef, useCallback } from "react";
+import { useState, useImperativeHandle, forwardRef, useCallback, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Save } from "lucide-react";
@@ -64,6 +64,13 @@ Happy documenting! 📝
     const [content, setContentState] = useState(initialContent || defaultContent);
     const [previewMode, setPreviewMode] = useState(false);
     const [textareaRef, setTextareaRef] = useState<HTMLTextAreaElement | null>(null);
+
+    // Update content when initialContent prop changes (for tab switching)
+    useEffect(() => {
+      if (initialContent !== undefined) {
+        setContentState(initialContent);
+      }
+    }, [initialContent]);
 
     const updateContent = useCallback((newContent: string) => {
       setContentState(newContent);

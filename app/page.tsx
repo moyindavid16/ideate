@@ -108,6 +108,20 @@ export default function OptimizedHome() {
   const mainPanelRef = useRef<ImperativePanelHandle>(null);
   const chatPanelRef = useRef<ImperativePanelHandle>(null);
 
+  // Debug panel sizes
+  useEffect(() => {
+    const chatPanel = chatPanelRef.current;
+    if (chatPanel) {
+      console.log('Chat Panel Info:', {
+        size: chatPanel.getSize(),
+        isCollapsed: chatPanel.isCollapsed(),
+        isExpanded: chatPanel.isExpanded(),
+        chatOpen,
+        chatPanelSize
+      });
+    }
+  }, [chatOpen, chatPanelSize]);
+
   const handlePanelResize = useCallback(
     (sizes: number[]) => {
       // Save the chat panel size (second panel)
@@ -187,9 +201,12 @@ export default function OptimizedHome() {
               defaultSize={chatOpen ? chatPanelSize : 0}
               minSize={0}
               maxSize={50}
-              className="overflow-hidden will-change-width"
+              className="overflow-y-auto will-change-width chat-panel-container"
             >
-              <div className={`h-full chat-panel ${chatOpen ? "chat-panel-open" : "chat-panel-closed"}`}>
+              <div
+                className={`h-full max-h-full overflow-hidden flex flex-col chat-panel ${chatOpen ? "chat-panel-open" : "chat-panel-closed"}`}
+                style={{ height: '100%', maxHeight: '100%' }}
+              >
                 <ErrorBoundary
                   fallback={
                     <div className="h-full flex items-center justify-center p-4 sticky-blue rounded-2xl">

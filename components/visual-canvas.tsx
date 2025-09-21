@@ -101,23 +101,23 @@ export function VisualCanvas({ tabId, initialData, onDataChange, setExcalidrawAp
   return (
       <div className="h-full p-4 bg-transparent">
         {/* Export Controls */}
-        <div className="mb-2 flex gap-2">
-          <button
-              onClick={exportJSON}
-              className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
-              title="Download JSON"
-          >
-            <Download size={12} />
-            Export JSON
-          </button>
-          <button
-              onClick={copyToClipboard}
-              className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-              title="Copy JSON to clipboard"
-          >
-            Copy JSON
-          </button>
-        </div>
+        {/*<div className="mb-2 flex gap-2">*/}
+        {/*  <button*/}
+        {/*      onClick={exportJSON}*/}
+        {/*      className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"*/}
+        {/*      title="Download JSON"*/}
+        {/*  >*/}
+        {/*    <Download size={12} />*/}
+        {/*    Export JSON*/}
+        {/*  </button>*/}
+        {/*  <button*/}
+        {/*      onClick={copyToClipboard}*/}
+        {/*      className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"*/}
+        {/*      title="Copy JSON to clipboard"*/}
+        {/*  >*/}
+        {/*    Copy JSON*/}
+        {/*  </button>*/}
+        {/*</div>*/}
 
         <div className="h-full rounded-md overflow-hidden border border-gray-200 shadow-sm">
           {/*

@@ -18,6 +18,7 @@ import {
   Square,
 } from "lucide-react";
 import type { FC } from "react";
+import { useEffect, useRef } from "react";
 
 import {
   ComposerAddAttachment,
@@ -33,30 +34,127 @@ import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import * as m from "motion/react-m";
 
 export const Thread: FC = () => {
+  const threadRootRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Debug thread dimensions
+  useEffect(() => {
+    const threadRoot = threadRootRef.current;
+    const viewport = viewportRef.current;
+
+    if (threadRoot) {
+      console.log('Thread Root Dimensions:', {
+        clientHeight: threadRoot.clientHeight,
+        scrollHeight: threadRoot.scrollHeight,
+        offsetHeight: threadRoot.offsetHeight,
+        className: threadRoot.className,
+        computedStyle: {
+          height: getComputedStyle(threadRoot).height,
+          maxHeight: getComputedStyle(threadRoot).maxHeight,
+          overflow: getComputedStyle(threadRoot).overflow,
+          overflowY: getComputedStyle(threadRoot).overflowY,
+        }
+      });
+    }
+
+    if (viewport) {
+      console.log('Thread Viewport Dimensions:', {
+        clientHeight: viewport.clientHeight,
+        scrollHeight: viewport.scrollHeight,
+        offsetHeight: viewport.offsetHeight,
+        className: viewport.className,
+        computedStyle: {
+          height: getComputedStyle(viewport).height,
+          maxHeight: getComputedStyle(viewport).maxHeight,
+          overflow: getComputedStyle(viewport).overflow,
+          overflowY: getComputedStyle(viewport).overflowY,
+        }
+      });
+
+      // Monitor viewport scroll
+      const handleScroll = () => {
+        console.log('Viewport Scroll:', {
+          scrollTop: viewport.scrollTop,
+          scrollHeight: viewport.scrollHeight,
+          clientHeight: viewport.clientHeight,
+          isAtBottom: viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 10
+        });
+      };
+
+      viewport.addEventListener('scroll', handleScroll);
+
+      // Monitor DOM changes in the viewport
+      const mutationObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+            console.log('Viewport DOM Changed:', {
+              addedNodes: mutation.addedNodes.length,
+              removedNodes: mutation.removedNodes.length,
+              target: mutation.target,
+              viewportHeight: viewport.clientHeight,
+              viewportScrollHeight: viewport.scrollHeight,
+              timestamp: Date.now()
+            });
+          }
+        });
+      });
+
+      mutationObserver.observe(viewport, {
+        childList: true,
+        subtree: true,
+        attributes: false
+      });
+
+      return () => {
+        viewport.removeEventListener('scroll', handleScroll);
+        mutationObserver.disconnect();
+      };
+    }
+  }, []);
+
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
         <ThreadPrimitive.Root
-          className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
+          ref={threadRootRef}
+          className="aui-root aui-thread-root @container relative h-full max-h-full bg-background"
           style={{
             ["--thread-max-width" as string]: "44rem",
+            height: '100%',
+            maxHeight: '100%'
           }}
         >
-          <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto px-4">
+          <ThreadPrimitive.Viewport
+            ref={viewportRef}
+            className="aui-thread-viewport absolute inset-x-0 top-0 flex flex-col overflow-y-auto px-4"
+            style={{
+              bottom: '160px', // Increased space for composer
+              height: 'auto',
+              maxHeight: 'none'
+            }}
+          >
             <ThreadWelcome />
 
             <ThreadPrimitive.Messages
               components={{
-                UserMessage,
+                UserMessage: (props) => {
+                  console.log('UserMessage rendered:', { props });
+                  return <UserMessage {...props} />;
+                },
                 EditComposer,
-                AssistantMessage,
+                AssistantMessage: (props) => {
+                  console.log('AssistantMessage rendered:', { props });
+                  return <AssistantMessage {...props} />;
+                },
               }}
             />
             <ThreadPrimitive.If empty={false}>
               <div className="aui-thread-viewport-spacer min-h-8 grow" />
             </ThreadPrimitive.If>
-            <Composer />
           </ThreadPrimitive.Viewport>
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-4 bg-background">
+            <Composer />
+          </div>
         </ThreadPrimitive.Root>
       </MotionConfig>
     </LazyMotion>
@@ -167,7 +265,7 @@ const ThreadWelcomeSuggestions: FC = () => {
 
 const Composer: FC = () => {
   return (
-    <div className="aui-composer-wrapper sticky bottom-0 mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 overflow-visible rounded-t-3xl bg-background pb-4 md:pb-6">
+    <div className="aui-composer-wrapper mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 overflow-visible rounded-t-3xl bg-background pb-4 md:pb-6 flex-shrink-0">
       <ThreadScrollToBottom />
       <ThreadPrimitive.Empty>
         <ThreadWelcomeSuggestions />

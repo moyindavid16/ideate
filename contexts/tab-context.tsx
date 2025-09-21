@@ -11,6 +11,8 @@ export interface Tab {
   type: TabType;
   title: string;
   excalidrawData?: Record<string, unknown>;
+  codeData?: string;
+  markdownData?: string;
 }
 
 export interface TabGroup {
@@ -45,6 +47,8 @@ type TabAction =
   | { type: 'CLOSE_TAB'; payload: { tabId: string } }
   | { type: 'SET_ACTIVE_TAB'; payload: { tabId: string } }
   | { type: 'UPDATE_TAB_DATA'; payload: { tabId: string; data: Record<string, unknown> } }
+  | { type: 'UPDATE_TAB_CODE'; payload: { tabId: string; code: string } }
+  | { type: 'UPDATE_TAB_MARKDOWN'; payload: { tabId: string; markdown: string } }
   | { type: 'UPDATE_TAB_NAME'; payload: { tabId: string; name: string } }
   | { type: 'START_EDITING_TAB'; payload: { tabId: string; currentName: string } }
   | { type: 'UPDATE_EDITING_NAME'; payload: { name: string } }
@@ -135,6 +139,26 @@ function tabReducer(state: TabState, action: TabAction): TabState {
         tabs: state.tabs.map(tab =>
           tab.id === action.payload.tabId
             ? { ...tab, excalidrawData: action.payload.data }
+            : tab
+        )
+      };
+
+    case 'UPDATE_TAB_CODE':
+      return {
+        ...state,
+        tabs: state.tabs.map(tab =>
+          tab.id === action.payload.tabId
+            ? { ...tab, codeData: action.payload.code }
+            : tab
+        )
+      };
+
+    case 'UPDATE_TAB_MARKDOWN':
+      return {
+        ...state,
+        tabs: state.tabs.map(tab =>
+          tab.id === action.payload.tabId
+            ? { ...tab, markdownData: action.payload.markdown }
             : tab
         )
       };
@@ -312,6 +336,8 @@ interface TabContextValue {
     closeTab: (tabId: string) => void;
     setActiveTab: (tabId: string) => void;
     updateTabData: (tabId: string, data: Record<string, unknown>) => void;
+    updateTabCode: (tabId: string, code: string) => void;
+    updateTabMarkdown: (tabId: string, markdown: string) => void;
     updateTabName: (tabId: string, name: string) => void;
     startEditingTab: (tabId: string, currentName: string) => void;
     updateEditingName: (name: string) => void;
@@ -347,6 +373,8 @@ export function TabProvider({ children }: { children: React.ReactNode }) {
     closeTab: (tabId: string) => dispatch({ type: 'CLOSE_TAB', payload: { tabId } }),
     setActiveTab: (tabId: string) => dispatch({ type: 'SET_ACTIVE_TAB', payload: { tabId } }),
     updateTabData: (tabId: string, data: Record<string, unknown>) => dispatch({ type: 'UPDATE_TAB_DATA', payload: { tabId, data } }),
+    updateTabCode: (tabId: string, code: string) => dispatch({ type: 'UPDATE_TAB_CODE', payload: { tabId, code } }),
+    updateTabMarkdown: (tabId: string, markdown: string) => dispatch({ type: 'UPDATE_TAB_MARKDOWN', payload: { tabId, markdown } }),
     updateTabName: (tabId: string, name: string) => dispatch({ type: 'UPDATE_TAB_NAME', payload: { tabId, name } }),
     startEditingTab: (tabId: string, currentName: string) => dispatch({ type: 'START_EDITING_TAB', payload: { tabId, currentName } }),
     updateEditingName: (name: string) => dispatch({ type: 'UPDATE_EDITING_NAME', payload: { name } }),

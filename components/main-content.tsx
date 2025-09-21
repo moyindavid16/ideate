@@ -60,9 +60,19 @@ const MainContent = React.memo(({ chatOpen = false, setExcalidrawApiForTab }: Ma
           />
         );
       case "code":
-        return <CodeEditor />;
+        return (
+          <CodeEditor
+            initialCode={tab.codeData}
+            onCodeChange={(code) => actions.updateTabCode(tab.id, code)}
+          />
+        );
       case "markdown":
-        return <MarkdownEditor />;
+        return (
+          <MarkdownEditor
+            initialContent={tab.markdownData}
+            onContentChange={(content) => actions.updateTabMarkdown(tab.id, content)}
+          />
+        );
       default:
         return null;
     }

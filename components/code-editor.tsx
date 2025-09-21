@@ -51,6 +51,13 @@ export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
     // Use singleton Pyodide manager
     const { instance: pyodide, status: pyodideStatus, error: pyodideError, initialize } = usePyodide();
 
+    // Update code when initialCode prop changes (for tab switching)
+    useEffect(() => {
+      if (initialCode !== undefined) {
+        setCode(initialCode);
+      }
+    }, [initialCode]);
+
     // Initialize Pyodide when component mounts
     useEffect(() => {
       if (pyodideStatus === 'idle') {
