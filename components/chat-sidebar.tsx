@@ -6,11 +6,9 @@ import {AssistantRuntimeProvider} from "@assistant-ui/react";
 import {useAISDKRuntime} from "@assistant-ui/react-ai-sdk";
 import {DefaultChatTransport} from "ai";
 import type {AppState} from "@excalidraw/excalidraw/types";
-<<<<<<< Updated upstream
-=======
 import {useEffect, useRef} from "react";
 import { Tab } from "@/contexts/tab-context";
->>>>>>> Stashed changes
+
 
 interface ChatSidebarProps {
   onGetDrawingData: () => Promise<{imageBytes: Uint8Array | null; drawingJSON: string | null}>;
@@ -19,13 +17,21 @@ interface ChatSidebarProps {
   activeTab: Tab;
 }
 
-export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps) {
+export function ChatSidebar({onGetDrawingData, onUpdateScene, activeTab}: ChatSidebarProps) {
   const chat = useChat({
     transport: new DefaultChatTransport({
       prepareSendMessagesRequest: async ({messages}) => {
         console.log("preparing request...");
 
-        if active
+        if (activeTab.type == "markdown") {
+            return {
+              body: {
+                prompt: messages[messages.length - 1].parts[0],
+                type: activeTab.type,
+                markdownData: activeTab.markdownData
+              }
+            }
+        }
 
         try {
           const {imageBytes, drawingJSON} = await onGetDrawingData();
@@ -36,6 +42,7 @@ export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps)
               prompt: messages[messages.length - 1].parts[0],
               imageBytes: imageBytes,
               drawingJSON: drawingJSON,
+              type: activeTab.type
             },
           };
         } catch (error) {
@@ -46,6 +53,7 @@ export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps)
               prompt: messages[messages.length - 1].parts[0],
               imageBytes: null,
               drawingJSON: null,
+              type: activeTab.type
             },
           };
         }
