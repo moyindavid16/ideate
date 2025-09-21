@@ -6,11 +6,17 @@ import {AssistantRuntimeProvider} from "@assistant-ui/react";
 import {useAISDKRuntime} from "@assistant-ui/react-ai-sdk";
 import {DefaultChatTransport} from "ai";
 import type {AppState} from "@excalidraw/excalidraw/types";
+<<<<<<< Updated upstream
+=======
+import {useEffect, useRef} from "react";
+import { Tab } from "@/contexts/tab-context";
+>>>>>>> Stashed changes
 
 interface ChatSidebarProps {
   onGetDrawingData: () => Promise<{imageBytes: Uint8Array | null; drawingJSON: string | null}>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdateScene?: (elements: any[], appState: AppState) => void;
+  activeTab: Tab;
 }
 
 export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps) {
@@ -18,6 +24,8 @@ export function ChatSidebar({onGetDrawingData, onUpdateScene}: ChatSidebarProps)
     transport: new DefaultChatTransport({
       prepareSendMessagesRequest: async ({messages}) => {
         console.log("preparing request...");
+
+        if active
 
         try {
           const {imageBytes, drawingJSON} = await onGetDrawingData();
