@@ -3,8 +3,8 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
 
-export const weatherAgent = new Agent({
-  name: 'Weather Agent',
+export const excalidrawMarkdownAgent = new Agent({
+  name: 'Excalidraw Markdown Agent',
   instructions: `
       # System Prompt: Excalidraw to Notes Converter
 

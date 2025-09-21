@@ -29,6 +29,8 @@ export async function POST(req: Request) {
   const stream = createUIMessageStream({
     execute: async ({writer}) => {
       // Make the planner work
+      const mdAgent = mastra.getAgent("excalidrawMarkdownAgent")
+
       const plannerAgent = mastra.getAgent("excalidrawPlannerAgent");
       console.log("Got planner agent");
       const plannerResult = await plannerAgent.generate(
