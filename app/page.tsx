@@ -108,19 +108,6 @@ export default function OptimizedHome() {
   const mainPanelRef = useRef<ImperativePanelHandle>(null);
   const chatPanelRef = useRef<ImperativePanelHandle>(null);
 
-  // Debug panel sizes
-  useEffect(() => {
-    const chatPanel = chatPanelRef.current;
-    if (chatPanel) {
-      console.log('Chat Panel Info:', {
-        size: chatPanel.getSize(),
-        isCollapsed: chatPanel.isCollapsed(),
-        isExpanded: chatPanel.isExpanded(),
-        chatOpen,
-        chatPanelSize
-      });
-    }
-  }, [chatOpen, chatPanelSize]);
 
   const handlePanelResize = useCallback(
     (sizes: number[]) => {
