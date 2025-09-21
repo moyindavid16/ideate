@@ -271,7 +271,7 @@ Happy documenting! 📝
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       <div className={`flex items-center justify-between px-4 py-3 border-b border-gray-200 ${getBackgroundClass()}`}>
         <h3 className="text-sm font-medium text-gray-700">Markdown Editor</h3>
         <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ Happy documenting! 📝
 
       <div className={`flex-1 p-4 ${getBackgroundClass()}`}>
         {previewMode ? (
-          <div className={`h-full overflow-auto prose prose-sm max-w-none rounded-md border border-gray-200 p-4 ${getBackgroundClass()} shadow-sm`}>
+          <div className={`flex-1 overflow-auto prose prose-sm max-w-none rounded-md border border-gray-200 p-4 ${getBackgroundClass()} shadow-sm`}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -324,7 +324,7 @@ Happy documenting! 📝
             ref={setTextareaRef}
             value={content}
             onChange={(e) => updateContent(e.target.value)}
-            className={`h-full resize-none text-sm rounded-md border-gray-200 focus:border-gray-400 transition-all duration-200 ${getBackgroundClass()} shadow-sm`}
+            className={`flex-1 min-h-0 resize-none text-sm rounded-md border-gray-200 focus:border-gray-400 transition-all duration-200 ${getBackgroundClass()} shadow-sm`}
             placeholder="Write your markdown content here..."
           />
         )}
