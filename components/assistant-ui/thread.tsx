@@ -100,7 +100,7 @@ const ThreadWelcome: FC = () => {
               exit={{ opacity: 0, y: 10 }}
               className="aui-thread-welcome-message-motion-1 text-2xl font-semibold"
             >
-              Hello there!
+              Hi! I'm doodle buddy!
             </m.div>
             <m.div
               initial={{ opacity: 0, y: 10 }}
@@ -109,7 +109,7 @@ const ThreadWelcome: FC = () => {
               transition={{ delay: 0.1 }}
               className="aui-thread-welcome-message-motion-2 text-2xl text-muted-foreground/65"
             >
-              How can I help you today?
+              What do you want to make today!
             </m.div>
           </div>
         </div>
@@ -159,7 +159,7 @@ const ThreadWelcomeSuggestions: FC = () => {
           >
             <Button
               variant="ghost"
-              className="aui-thread-welcome-suggestion h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-3xl border px-5 py-4 text-left text-sm @md:flex-col dark:hover:bg-accent/60"
+              className="aui-thread-welcome-suggestion h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-3xl border border-[rgba(139,69,19,0.12)] bg-gradient-to-br from-[#fffef9] to-[#fefcf4] hover:bg-gradient-to-br hover:from-[#fdfcf7] hover:to-[#fbf9f2] px-5 py-4 text-left text-sm @md:flex-col shadow-[0_2px_6px_rgba(139,69,19,0.06),0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] hover:shadow-[0_4px_12px_rgba(139,69,19,0.08),0_2px_6px_rgba(0,0,0,0.06)] transition-all duration-200 dark:hover:bg-accent/60"
               aria-label={suggestedAction.action}
             >
               <span className="aui-thread-welcome-suggestion-text-1 font-medium">
@@ -183,7 +183,7 @@ const Composer: FC = () => {
       <ThreadPrimitive.Empty>
         <ThreadWelcomeSuggestions />
       </ThreadPrimitive.Empty>
-      <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-3xl border border-border bg-muted px-1 pt-2 shadow-[0_9px_9px_0px_rgba(0,0,0,0.01),0_2px_5px_0px_rgba(0,0,0,0.06)] dark:border-muted-foreground/15">
+      <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-3xl border border-[rgba(139,69,19,0.15)] bg-gradient-to-br from-[#fdfdfc] to-[#f9f8f7] px-1 pt-2 shadow-[0_6px_16px_rgba(139,69,19,0.08),0_3px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-muted-foreground/15">
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message..."
@@ -253,7 +253,7 @@ const AssistantMessage: FC = () => {
         className="aui-assistant-message-root relative mx-auto w-full max-w-[var(--thread-max-width)] animate-in py-4 duration-200 fade-in slide-in-from-bottom-1 last:mb-24"
         data-role="assistant"
       >
-        <div className="aui-assistant-message-content mx-2 leading-7 break-words text-foreground">
+        <div className="aui-assistant-message-content mx-2 leading-7 break-words text-foreground bg-gradient-to-br from-[#fdfdfc] to-[#f9f8f7] rounded-2xl px-4 py-3 border border-[rgba(139,69,19,0.08)] shadow-[0_2px_8px_rgba(139,69,19,0.06),0_1px_4px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.8)]">
           <MessagePrimitive.Parts
             components={{
               Text: MarkdownText,
@@ -309,7 +309,7 @@ const UserMessage: FC = () => {
         <UserMessageAttachments />
 
         <div className="aui-user-message-content-wrapper relative col-start-2 min-w-0">
-          <div className="aui-user-message-content rounded-3xl bg-muted px-5 py-2.5 break-words text-foreground">
+          <div className="aui-user-message-content rounded-3xl px-5 py-2.5 break-words text-foreground bg-gradient-to-br from-[#fffef9] to-[#fefcf4] border border-[rgba(139,69,19,0.12)] shadow-[0_4px_12px_rgba(139,69,19,0.08),0_2px_6px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_-1px_0_rgba(139,69,19,0.1)]">
             <MessagePrimitive.Parts />
           </div>
           <div className="aui-user-action-bar-wrapper absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 pr-2">
