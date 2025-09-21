@@ -500,4 +500,63 @@
   [data-panel-group] [data-panel-group] {
     overflow: visible !important;
   }
+
+  /* Optimized Chat Panel Animations - CSS Only */
+  .chat-panel {
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+  }
+
+  .chat-panel-open {
+    transform: translateX(0%);
+    opacity: 1;
+  }
+
+  .chat-panel-closed {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  /* Panel Resize Animations - Optimized */
+  .panel-group {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+  }
+
+  /* Performance optimizations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-width {
+    will-change: width;
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .chat-panel,
+    .panel-group,
+    .sticky-yellow,
+    .sticky-pink,
+    .sticky-blue,
+    .sticky-green,
+    .sticky-orange,
+    .sticky-purple {
+      transition: none;
+      animation: none;
+    }
+
+    .paper-surface {
+      animation: none;
+    }
+  }
+
+  /* Code Editor Panel Group Override */
+  .code-editor-panels[data-panel-group] {
+    overflow: hidden !important;
+  }
+
+  .code-editor-panels[data-panel] {
+    overflow: hidden !important;
+  }
 }

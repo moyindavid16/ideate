@@ -1,59 +1,30 @@
 "use client";
 
+import React from "react";
 import { PenTool, Code, FileText, X } from "lucide-react";
-import type { Tab, DragState } from "@/app/page";
+import { useTabState, useTabActions } from "@/contexts/tab-context";
 import { getTabColorClass, calculateDropZone } from "@/lib/utils";
+import type { Tab } from "@/contexts/tab-context";
 
 interface DraggableTabProps {
   tab: Tab;
   isActive: boolean;
   isHovered: boolean;
-  isMainContentHovered: boolean;
-  editingTabId: string | null;
-  editingTabName: string;
-  tabs: Tab[];
-  dragState: DragState;
   isInSplitView?: boolean;
-  splitViewPartner?: string | null;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  onClick: () => void;
-  onDoubleClick: () => void;
-  onEditChange: (value: string) => void;
-  onEditBlur: () => void;
-  onEditKeyDown: (e: React.KeyboardEvent) => void;
-  onClose: () => void;
-  onDragStart: (tabId: string) => void;
-  onDragEnd: () => void;
-  onDragOver: (tabId: string, dropZone: 'left' | 'right' | 'top' | 'bottom') => void;
-  onDragLeave: () => void;
 }
 
-export function DraggableTab({
+const DraggableTab = React.memo(({
   tab,
   isActive,
   isHovered,
-  isMainContentHovered,
-  editingTabId,
-  editingTabName,
-  tabs,
-  dragState,
-  isInSplitView = false,
-  splitViewPartner = null,
-  onMouseEnter,
-  onMouseLeave,
-  onClick,
-  onDoubleClick,
-  onEditChange,
-  onEditBlur,
-  onEditKeyDown,
-  onClose,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDragLeave,
-}: DraggableTabProps) {
-  const getTabIcon = () => {
+  isInSplitView = false
+}: DraggableTabProps) => {
+  const state = useTabState();
+  const actions = useTabActions();
+
+  const { tabs, editingTabId, editingTabName, dragState } = state;
+
+  const getTabIcon = React.useMemo(() => {
     const iconProps = { className: "w-4 h-4" };
     switch (tab.type) {
       case 'visual': return <PenTool {...iconProps} />;
@@ -61,12 +32,63 @@ export function DraggableTab({
       case 'markdown': return <FileText {...iconProps} />;
       default: return <PenTool {...iconProps} />;
     }
-  };
+  }, [tab.type]);
 
-  const tabColorClass = getTabColorClass(tab.type);
+  const tabColorClass = React.useMemo(() => getTabColorClass(tab.type), [tab.type]);
 
   const isDragTarget = dragState.dropTargetTabId === tab.id;
   const isBeingDragged = dragState.draggedTabId === tab.id;
+
+  const handleDragStart = React.useCallback((e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    actions.startDrag(tab.id);
+  }, [actions, tab.id]);
+
+  const handleDragOver = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (dragState.draggedTabId && dragState.draggedTabId !== tab.id) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const dropZone = calculateDropZone(e.clientX, e.clientY, rect);
+      actions.updateDragTarget(tab.id, dropZone);
+    }
+  }, [dragState.draggedTabId, tab.id, actions]);
+
+  const handleDrop = React.useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleClick = React.useCallback(() => {
+    actions.setActiveTab(tab.id);
+  }, [actions, tab.id]);
+
+  const handleDoubleClick = React.useCallback(() => {
+    actions.startEditingTab(tab.id, tab.title);
+  }, [actions, tab.id, tab.title]);
+
+  const handleEditChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    actions.updateEditingName(e.target.value);
+  }, [actions]);
+
+  const handleEditBlur = React.useCallback(() => {
+    actions.finishEditingTab();
+  }, [actions]);
+
+  const handleEditKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') actions.finishEditingTab();
+    if (e.key === 'Escape') actions.cancelEditingTab();
+  }, [actions]);
+
+  const handleClose = React.useCallback(() => {
+    actions.closeTab(tab.id);
+  }, [actions, tab.id]);
+
+  const handleMouseEnter = React.useCallback(() => {
+    actions.setHoveredTab(tab.id);
+  }, [actions, tab.id]);
+
+  const handleMouseLeave = React.useCallback(() => {
+    actions.setHoveredTab(null);
+  }, [actions]);
 
   return (
     <div className="relative group">
@@ -81,26 +103,14 @@ export function DraggableTab({
           isInSplitView && !isActive ? 'ring-1 ring-accent/10' : ''
         }`}
         draggable={!editingTabId}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-        onDragStart={(e) => {
-          e.dataTransfer.effectAllowed = 'move';
-          onDragStart(tab.id);
-        }}
-        onDragEnd={onDragEnd}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (dragState.draggedTabId && dragState.draggedTabId !== tab.id) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const dropZone = calculateDropZone(e.clientX, e.clientY, rect);
-            onDragOver(tab.id, dropZone);
-          }
-        }}
-        onDragLeave={onDragLeave}
-        onDrop={(e) => {
-          e.preventDefault();
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onDragStart={handleDragStart}
+        onDragEnd={actions.endDrag}
+        onDragOver={handleDragOver}
+        onDragLeave={actions.clearDragTarget}
+        onDrop={handleDrop}
       >
         {/* Drop zone indicators */}
         {isDragTarget && dragState.dropZone && (
@@ -118,22 +128,22 @@ export function DraggableTab({
           </div>
         )}
 
-        {getTabIcon()}
+        {getTabIcon}
 
         {editingTabId === tab.id ? (
           <input
             type="text"
             value={editingTabName}
-            onChange={(e) => onEditChange(e.target.value)}
-            onBlur={onEditBlur}
-            onKeyDown={onEditKeyDown}
+            onChange={handleEditChange}
+            onBlur={handleEditBlur}
+            onKeyDown={handleEditKeyDown}
             className="text-sm font-medium bg-transparent border-none outline-none min-w-0 w-24"
             autoFocus
           />
         ) : (
           <span
             className="text-sm font-medium"
-            onDoubleClick={onDoubleClick}
+            onDoubleClick={handleDoubleClick}
           >
             {tab.title}
           </span>
@@ -143,7 +153,7 @@ export function DraggableTab({
       {/* Close button */}
       {tabs.length > 1 && (
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-background shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 border border-border flex items-center justify-center z-30"
         >
           <X className="w-3 h-3 text-muted-foreground" />
@@ -151,4 +161,8 @@ export function DraggableTab({
       )}
     </div>
   );
-}
+});
+
+DraggableTab.displayName = 'DraggableTab';
+
+export { DraggableTab };

@@ -3,87 +3,17 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Save, AlertCircle, CheckCircle, Loader } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
-
-// Monaco Editor Configuration
-const MONACO_OPTIONS = {
-  minimap: { enabled: false },
-  fontSize: 14,
-  lineNumbers: 'on' as const,
-  roundedSelection: false,
-  scrollBeyondLastLine: false,
-  automaticLayout: true,
-  tabSize: 4,
-  insertSpaces: true,
-  wordWrap: 'on' as const,
-  lineNumbersMinChars: 3,
-  glyphMargin: true,
-  folding: true,
-  lineDecorationsWidth: 20,
-  renderLineHighlight: 'line' as const,
-  selectionHighlight: false,
-  occurrencesHighlight: false,
-  codeLens: false,
-  contextmenu: true,
-  mouseWheelZoom: true,
-  quickSuggestions: true,
-  parameterHints: { enabled: true },
-  suggestOnTriggerCharacters: true,
-  acceptSuggestionOnEnter: 'on' as const,
-  tabCompletion: 'on' as const,
-  wordBasedSuggestions: 'allDocuments' as const,
-  dragAndDrop: true,
-  links: true,
-  colorDecorators: true
-};
-
-// Python completion suggestions
-const PYTHON_COMPLETIONS = [
-  {
-    label: 'print',
-    kind: 'Function' as const,
-    insertText: 'print(${1:value})',
-    documentation: 'Print values to the console'
-  },
-  {
-    label: 'def',
-    kind: 'Keyword' as const,
-    insertText: 'def ${1:function_name}(${2:args}):\n    ${3:pass}',
-    documentation: 'Define a function'
-  },
-  {
-    label: 'if',
-    kind: 'Keyword' as const,
-    insertText: 'if ${1:condition}:\n    ${2:pass}',
-    documentation: 'Conditional statement'
-  },
-  {
-    label: 'for',
-    kind: 'Keyword' as const,
-    insertText: 'for ${1:item} in ${2:iterable}:\n    ${3:pass}',
-    documentation: 'For loop'
-  },
-  {
-    label: 'while',
-    kind: 'Keyword' as const,
-    insertText: 'while ${1:condition}:\n    ${2:pass}',
-    documentation: 'While loop'
-  },
-  {
-    label: 'class',
-    kind: 'Keyword' as const,
-    insertText: 'class ${1:ClassName}:\n    def __init__(self${2:, args}):\n        ${3:pass}',
-    documentation: 'Define a class'
-  }
-];
+import CodeMirror from "@uiw/react-codemirror";
+import { python } from "@codemirror/lang-python";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { usePyodide } from "@/lib/pyodide-manager";
 
 const DEFAULT_PYTHON_CODE = `# Welcome to the Ideate's Python IDE
 # This is a full-featured Python interpreter with linting and execution
 
 def hello_world():
     """A simple greeting function"""
-    print("Hello from Ideate!")
     return "Welcome to the Ideate"
 
 result = hello_world()
@@ -99,14 +29,6 @@ interface CodeEditorProps {
   initialCode?: string;
 }
 
-interface PyodideInstance {
-  runPython: (code: string) => unknown;
-  loadPackage: (packages: string[]) => Promise<void>;
-  globals: {
-    get: (name: string) => unknown;
-  };
-}
-
 export interface CodeEditorRef {
   getCode: () => string;
   setCode: (code: string) => void;
@@ -116,149 +38,40 @@ export interface CodeEditorRef {
   replaceCode: (code: string) => void;
   formatCode: () => void;
   clearCode: () => void;
+  resize: () => void;
 }
 
 export const CodeEditor = forwardRef<CodeEditorRef, CodeEditorProps>(
-  ({ tabType = 'code', onCodeChange, initialCode }, ref) => {
+  ({ onCodeChange, initialCode }, ref) => {
     const [code, setCode] = useState(initialCode || DEFAULT_PYTHON_CODE);
     const [output, setOutput] = useState<string>("");
     const [isRunning, setIsRunning] = useState(false);
-    const [pyodide, setPyodide] = useState<PyodideInstance | null>(null);
-    const [pyodideStatus, setPyodideStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-    const [diagnostics, setDiagnostics] = useState<editor.IMarkerData[]>([]);
-    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-    const monacoRef = useRef<typeof import('monaco-editor') | null>(null);
+    const editorRef = useRef<React.ComponentRef<typeof CodeMirror>>(null);
 
-    // Initialize Pyodide
+    // Use singleton Pyodide manager
+    const { instance: pyodide, status: pyodideStatus, error: pyodideError, initialize } = usePyodide();
+
+    // Initialize Pyodide when component mounts
     useEffect(() => {
-      const initPyodide = async () => {
-        try {
-          setPyodideStatus('loading');
+      if (pyodideStatus === 'idle') {
+        initialize();
+      }
+    }, [pyodideStatus, initialize]);
 
-          // Load Pyodide from CDN
-          if (typeof window !== 'undefined') {
-            const windowWithPyodide = window as Window & typeof globalThis & {
-              loadPyodide?: (config: { indexURL: string }) => Promise<PyodideInstance>
-            };
 
-            if (!windowWithPyodide.loadPyodide) {
-              const script = document.createElement('script');
-              script.src = 'https://cdn.jsdelivr.net/pyodide/v0.28.2/full/pyodide.js';
-              script.onload = async () => {
-                try {
-                  const pyodideInstance = await windowWithPyodide.loadPyodide!({
-                    indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.2/full/',
-                  });
-
-                  // Install common packages
-                  await pyodideInstance.loadPackage(['numpy', 'matplotlib']);
-
-                  setPyodide(pyodideInstance);
-                  setPyodideStatus('ready');
-                } catch (error) {
-                  console.error('Failed to initialize Pyodide:', error);
-                  setPyodideStatus('error');
-                }
-              };
-              script.onerror = () => {
-                console.error('Failed to load Pyodide script');
-                setPyodideStatus('error');
-              };
-              document.head.appendChild(script);
-            } else {
-              const pyodideInstance = await windowWithPyodide.loadPyodide({
-                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.2/full/',
-              });
-
-              // Install common packages
-              await pyodideInstance.loadPackage(['numpy', 'matplotlib']);
-
-              setPyodide(pyodideInstance);
-              setPyodideStatus('ready');
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load Pyodide:', error);
-          setPyodideStatus('error');
-        }
-      };
-
-      initPyodide();
-    }, []);
-
-    // Setup Monaco Editor with Python language features
-    const handleEditorDidMount = useCallback((editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => {
-      editorRef.current = editor;
-      monacoRef.current = monaco;
-
-      // Configure Python language settings
-      monaco.languages.registerCompletionItemProvider('python', {
-        provideCompletionItems: () => {
-          const suggestions = PYTHON_COMPLETIONS.map(completion => ({
-            label: completion.label,
-            kind: monaco.languages.CompletionItemKind[completion.kind],
-            insertText: completion.insertText,
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: completion.documentation
-          }));
-          return { suggestions };
-        }
-      });
-
-      // Setup basic linting
-      const performLinting = () => {
-        const model = editor.getModel();
-        if (!model) return;
-
-        const code = model.getValue();
-        const markers: editor.IMarkerData[] = [];
-
-        // Basic syntax checking
-        const lines = code.split('\n');
-        lines.forEach((line, index) => {
-          // Check for common Python syntax issues
-          if (line.trim().endsWith(':') && !line.trim().match(/^(if|for|while|def|class|try|except|finally|with|elif|else)\b/)) {
-            if (!line.includes('lambda')) {
-              markers.push({
-                severity: monaco.MarkerSeverity.Warning,
-                message: 'Possible syntax error: unexpected colon',
-                startLineNumber: index + 1,
-                startColumn: line.indexOf(':') + 1,
-                endLineNumber: index + 1,
-                endColumn: line.length + 1
-              });
-            }
-          }
-
-          // Check for undefined variables (basic check)
-          const undefinedVarMatch = line.match(/^\s*([a-zA-Z_]\w*)\s*(?!=)/);
-          if (undefinedVarMatch && !line.includes('=') && !line.includes('import') && !line.includes('def') && !line.includes('class')) {
-            // This is a very basic check - in a real IDE you'd use a proper AST parser
-          }
-        });
-
-        monaco.editor.setModelMarkers(model, 'python', markers);
-        setDiagnostics(markers);
-      };
-
-      // Perform linting on content change
-      editor.onDidChangeModelContent(() => {
-        performLinting();
-      });
-
-      // Initial linting
-      performLinting();
-    }, []);
-
-    const handleCodeChange = useCallback((value: string | undefined) => {
-      const newCode = value || '';
-      setCode(newCode);
-      onCodeChange?.(newCode);
+    const handleCodeChange = useCallback((value: string) => {
+      setCode(value);
+      onCodeChange?.(value);
     }, [onCodeChange]);
 
     const runCode = useCallback(async () => {
       if (!pyodide || pyodideStatus !== 'ready') {
-        setOutput('Python interpreter is not ready. Please wait...');
+        const statusMessage = pyodideStatus === 'loading'
+          ? 'Python interpreter is loading. Please wait...'
+          : pyodideStatus === 'error'
+          ? `Python interpreter failed to load: ${pyodideError?.message || 'Unknown error'}`
+          : 'Python interpreter is not ready. Please wait...';
+        setOutput(statusMessage);
         return;
       }
 
@@ -278,7 +91,7 @@ sys.stderr = StringIO()
         // Run the user code with proper error handling
         try {
           pyodide.runPython(code);
-        } catch (pythonError) {
+        } catch {
           // Get the detailed Python traceback
           const traceback = pyodide.runPython(`
 import traceback
@@ -306,7 +119,7 @@ sys.stderr.getvalue()
       } finally {
         setIsRunning(false);
       }
-    }, [code, pyodide, pyodideStatus]);
+    }, [code, pyodide, pyodideStatus, pyodideError?.message]);
 
     const saveCode = useCallback(() => {
       const blob = new Blob([code], { type: 'text/plain' });
@@ -326,86 +139,42 @@ sys.stderr.getvalue()
       getCode: () => code,
       setCode: (newCode: string) => {
         setCode(newCode);
-        if (editorRef.current) {
-          editorRef.current.setValue(newCode);
-        }
       },
       runCode,
       insertCode: (newCode: string, position: 'cursor' | 'end' = 'cursor') => {
-        if (editorRef.current) {
-          const editor = editorRef.current;
-          const model = editor.getModel();
-          if (model) {
-            if (position === 'end') {
-              const lineCount = model.getLineCount();
-              const lastLineLength = model.getLineLength(lineCount);
-              editor.executeEdits('', [{
-                range: {
-                  startLineNumber: lineCount,
-                  startColumn: lastLineLength + 1,
-                  endLineNumber: lineCount,
-                  endColumn: lastLineLength + 1
-                },
-                text: '\n' + newCode
-              }]);
-            } else {
-              const position = editor.getPosition();
-              if (position) {
-                editor.executeEdits('', [{
-                  range: {
-                    startLineNumber: position.lineNumber,
-                    startColumn: position.column,
-                    endLineNumber: position.lineNumber,
-                    endColumn: position.column
-                  },
-                  text: newCode
-                }]);
-              }
-            }
-          }
+        if (position === 'end') {
+          setCode(prev => prev + '\n' + newCode);
+        } else {
+          // For cursor position, we'll append to end for simplicity
+          // In a real implementation, you'd need to track cursor position
+          setCode(prev => prev + '\n' + newCode);
         }
       },
       appendCode: (newCode: string) => {
-        if (editorRef.current) {
-          const editor = editorRef.current;
-          const model = editor.getModel();
-          if (model) {
-            const lineCount = model.getLineCount();
-            const lastLineLength = model.getLineLength(lineCount);
-            editor.executeEdits('', [{
-              range: {
-                startLineNumber: lineCount,
-                startColumn: lastLineLength + 1,
-                endLineNumber: lineCount,
-                endColumn: lastLineLength + 1
-              },
-              text: '\n\n' + newCode
-            }]);
-          }
-        }
+        setCode(prev => prev + '\n\n' + newCode);
       },
       replaceCode: (newCode: string) => {
         setCode(newCode);
-        if (editorRef.current) {
-          editorRef.current.setValue(newCode);
-        }
       },
       formatCode: () => {
-        if (editorRef.current) {
-          editorRef.current.getAction('editor.action.formatDocument')?.run();
-        }
+        // CodeMirror doesn't have built-in Python formatting
+        // You could integrate with a Python formatter like black
+        console.log('Format code not implemented for CodeMirror');
       },
       clearCode: () => {
         setCode('');
-        if (editorRef.current) {
-          editorRef.current.setValue('');
-        }
+      },
+      resize: () => {
+        // CodeMirror handles resizing automatically with its parent container
+        console.log('CodeMirror handles resize automatically');
       }
     }), [code, runCode]);
 
 
     const getStatusIcon = () => {
       switch (pyodideStatus) {
+        case 'idle':
+          return <Loader className="w-3 h-3 text-gray-400" />;
         case 'loading':
           return <Loader className="w-3 h-3 animate-spin text-blue-600" />;
         case 'ready':
@@ -415,9 +184,6 @@ sys.stderr.getvalue()
       }
     };
 
-    const diagnosticsCount = diagnostics.length;
-    const errorCount = diagnostics.filter(d => d.severity === 8).length; // MarkerSeverity.Error = 8
-    const warningCount = diagnostics.filter(d => d.severity === 4).length; // MarkerSeverity.Warning = 4
 
     return (
       <div className="h-full flex flex-col">
@@ -427,25 +193,12 @@ sys.stderr.getvalue()
             <div className="flex items-center gap-1">
               {getStatusIcon()}
               <span className="text-xs text-gray-500">
+                {pyodideStatus === 'idle' && 'Initializing...'}
                 {pyodideStatus === 'loading' && 'Loading...'}
                 {pyodideStatus === 'ready' && 'Ready'}
-                {pyodideStatus === 'error' && 'Error'}
+                {pyodideStatus === 'error' && `Error: ${pyodideError?.message || 'Unknown'}`}
               </span>
             </div>
-            {diagnosticsCount > 0 && (
-              <div className="flex items-center gap-1">
-                {errorCount > 0 && (
-                  <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-                    {errorCount} error{errorCount > 1 ? 's' : ''}
-                  </span>
-                )}
-                {warningCount > 0 && (
-                  <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                    {warningCount} warning{warningCount > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -477,36 +230,67 @@ sys.stderr.getvalue()
         </div>
 
         <div className="flex-1 bg-transparent overflow-hidden">
-          <div className="h-2/3 border-b border-gray-200">
-            <Editor
-              height="100%"
-              defaultLanguage="python"
-              value={code}
-              onChange={handleCodeChange}
-              onMount={handleEditorDidMount}
-              theme="vs-light"
-              options={MONACO_OPTIONS}
-            />
-          </div>
+          <PanelGroup
+            direction="vertical"
+            className="h-full"
+          >
+            <Panel
+              defaultSize={70}
+              minSize={10}
+            >
+              <div className="h-full border-b border-gray-200 rounded-t-3xl overflow-hidden">
+                <CodeMirror
+                  ref={editorRef}
+                  value={code}
+                  onChange={handleCodeChange}
+                  extensions={[python()]}
+                  theme={oneDark}
+                  height="100%"
+                  style={{
+                    fontSize: '14px',
+                    height: '100%'
+                  }}
+                  basicSetup={{
+                    lineNumbers: true,
+                    foldGutter: true,
+                    dropCursor: false,
+                    allowMultipleSelections: false,
+                    indentOnInput: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    autocompletion: true,
+                    highlightSelectionMatches: false,
+                    searchKeymap: true,
+                  }}
+                />
+              </div>
+            </Panel>
 
-          <div className="h-1/3 p-4 bg-gray-50 overflow-auto">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-gray-700">Output Console</h4>
-              {output && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setOutput('')}
-                  className="text-xs h-6 px-2"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap overflow-auto max-h-full">
-              {output || 'Run your code to see output here...'}
-            </pre>
-          </div>
+            <PanelResizeHandle className="relative flex items-center justify-center group h-2 bg-gray-100 hover:bg-gray-200 transition-colors cursor-row-resize">
+              <div className="w-full h-0.5 bg-gray-300 group-hover:bg-gray-400 transition-colors" />
+            </PanelResizeHandle>
+
+            <Panel defaultSize={30} minSize={10}>
+              <div className="h-full p-4 bg-gray-50 overflow-auto rounded-b-3xl">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-700">Output Console</h4>
+                  {output && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setOutput('')}
+                      className="text-xs h-6 px-2"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <pre className="text-xs font-mono text-gray-800 whitespace-pre-wrap overflow-auto max-h-full">
+                  {output || 'Run your code to see output here...'}
+                </pre>
+              </div>
+            </Panel>
+          </PanelGroup>
         </div>
       </div>
     );

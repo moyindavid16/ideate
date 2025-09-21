@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
-
-// Import Excalidraw CSS
 import "@excalidraw/excalidraw/index.css";
+import { Download } from "lucide-react";
 
 // Dynamically import Excalidraw to avoid SSR issues
 const Excalidraw = dynamic(
@@ -14,38 +13,72 @@ const Excalidraw = dynamic(
 
 interface VisualCanvasProps {
   tabId: string;
-  initialData?: any;
-  onDataChange: (data: any) => void;
+  initialData?: Record<string, unknown>;
+  onDataChange: (data: Record<string, unknown>) => void;
+  tabType?: string; // For compatibility with existing props
 }
 
 export function VisualCanvas({ tabId, initialData, onDataChange }: VisualCanvasProps) {
   const [mounted, setMounted] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const [currentData, setCurrentData] = useState<Record<string, unknown>>(initialData || {});
+  const debounceRef = useRef<NodeJS.Timeout | undefined>();
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
-  const debouncedOnDataChange = useCallback((elements: any, appState: any) => {
+  const debouncedOnDataChange = useCallback((elements: Record<string, unknown>, appState: Record<string, unknown>) => {
+    // Update current data state immediately
+    const newData = { elements, appState };
+    setCurrentData(newData);
+
     // Clear previous timeout
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
+      debounceRef.current = undefined;
     }
+
+    // Only set new timeout if component is still mounted
+    if (!isMountedRef.current) return;
 
     // Debounce the state update to prevent excessive re-renders
     debounceRef.current = setTimeout(() => {
-      onDataChange({
-        elements,
-        appState,
-      });
+      // Double-check if component is still mounted before calling callback
+      if (isMountedRef.current && onDataChange) {
+        onDataChange(newData);
+      }
+      debounceRef.current = undefined;
     }, 300); // 300ms debounce
   }, [onDataChange]);
 
+  const exportJSON = useCallback(() => {
+    const dataStr = JSON.stringify(currentData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `canvas-${tabId}-${Date.now()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [currentData, tabId]);
+
+  const copyToClipboard = useCallback(() => {
+    navigator.clipboard.writeText(JSON.stringify(currentData, null, 2));
+  }, [currentData]);
+
   useEffect(() => {
-    // Cleanup timeout on unmount
+    // Comprehensive cleanup on unmount
     return () => {
+      isMountedRef.current = false;
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
+        debounceRef.current = undefined;
       }
     };
   }, []);
@@ -63,7 +96,31 @@ export function VisualCanvas({ tabId, initialData, onDataChange }: VisualCanvasP
 
   return (
     <div className="h-full p-4 bg-transparent">
+      {/* Export Controls */}
+      <div className="mb-2 flex gap-2">
+        <button
+          onClick={exportJSON}
+          className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
+          title="Download JSON"
+        >
+          <Download size={12} />
+          Export JSON
+        </button>
+        <button
+          onClick={copyToClipboard}
+          className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          title="Copy JSON to clipboard"
+        >
+          Copy JSON
+        </button>
+      </div>
+
       <div className="h-full rounded-md overflow-hidden border border-gray-200 shadow-sm">
+        {/*
+          IMPORTANT: Using key={tabId} ensures each tab gets its own Excalidraw instance.
+          This is necessary for state persistence between tabs.
+          The slight performance cost is acceptable for proper functionality.
+        */}
         <Excalidraw
           key={tabId}
           theme="light"

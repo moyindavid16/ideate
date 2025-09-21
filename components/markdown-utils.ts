@@ -64,7 +64,6 @@ ${content}
   },
 
   formatSelectionAs: (editor: MarkdownEditorRef, format: 'bold' | 'italic' | 'code' | 'quote') => {
-    const content = editor.getContent();
 
     switch (format) {
       case 'bold':

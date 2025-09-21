@@ -27,13 +27,12 @@ export interface MarkdownEditorRef {
 }
 
 interface MarkdownEditorProps {
-  tabType?: string;
   initialContent?: string;
   onContentChange?: (content: string) => void;
 }
 
 export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>(
-  ({ tabType, initialContent, onContentChange }, ref) => {
+  ({ initialContent, onContentChange }, ref) => {
     const defaultContent = `# Welcome to the Markdown Editor
 
 This is your collaborative documentation space where you can:
