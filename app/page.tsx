@@ -490,7 +490,7 @@ export default function Home() {
             </Panel>
             <PanelResizeHandle className="w-4 bg-border hover:bg-muted-foreground/20 transition-all duration-300 hover:w-6" />
             <Panel defaultSize={chatPanelSize} minSize={20} maxSize={50} className="overflow-visible">
-              <ChatSidebar />
+              <ChatSidebar api={} />
             </Panel>
           </PanelGroup>
         ) : (

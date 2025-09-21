@@ -12,7 +12,7 @@ import crypto from "crypto";
  *    - each upload is a new JSON
  */
 export async function POST(req: Request) {
-  const {prompt, imagebytes, drawingJSON} = await req.json();
+  const {prompt, imageBytes, drawingJSON} = await req.json();
 
   const stream = createUIMessageStream({
     execute: async ({writer}) => {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
             role: "user",
             content: [
               { type: "text", text: prompt },
-              { type: "image", image: `data:image/png;base64,${imagebytes}` }, // idk what blob needs to get changed to
+              { type: "image", image: `data:image/png;base64,${imageBytes}` }, // idk what blob needs to get changed to
               { type: "text", text: drawingJSON }
             ]
           },
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
               role: "user",
               content: [
                 { type: "text", text: generateDrawingPrompt(prompt, currentDrawingPlan)},
-                { type: "image", image: `data:image/png;base64,${imagebytes}` },
+                { type: "image", image: `data:image/png;base64,${imageBytes}` },
                 { type: "text", text: currentDrawingJSON }
               ]
             },
