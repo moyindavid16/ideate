@@ -46,8 +46,8 @@ class PyodideManager {
 
     this.state.initPromise = this.initializePyodide();
     try {
-      this.state.instance = await this.state.initPromise;
-      return this.state.instance;
+      const instance = await this.state.initPromise;
+      return instance;
     } catch (error) {
       this.state.initPromise = null;
       throw error;
@@ -123,6 +123,7 @@ class PyodideManager {
       // Load common packages
       await pyodideInstance.loadPackage(['numpy', 'matplotlib']);
 
+      this.state.instance = pyodideInstance;
       this.state.status = 'ready';
       this.state.error = null;
       this.notifyListeners();
