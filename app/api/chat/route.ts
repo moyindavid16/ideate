@@ -1,5 +1,5 @@
 import {mastra} from "@/mastra";
-import {createUIMessageStream, createUIMessageStreamResponse} from "ai";
+import {createUIMessageStream, createUIMessageStreamResponse, ImagePart} from "ai";
 import z from "zod";
 import crypto from "crypto";
 
@@ -12,16 +12,21 @@ import crypto from "crypto";
  *    - each upload is a new JSON
  */
 export async function POST(req: Request) {
-  const {prompt, messages} = await req.json();
+  const {prompt, imagebytes, drawingJSON} = await req.json();
 
   const stream = createUIMessageStream({
     execute: async ({writer}) => {
+      // Make the planner work
       const plannerAgent = mastra.getAgent("excalidrawPlannerAgent");
       const plannerResult = await plannerAgent.generate(
         [
           {
             role: "user",
-            content: prompt,
+            content: [
+              { type: "text", text: prompt },
+              { type: "image", image: `data:image/png;base64,${imagebytes}` }, // idk what blob needs to get changed to
+              { type: "text", text: drawingJSON }
+            ]
           },
         ],
         {
@@ -31,7 +36,6 @@ export async function POST(req: Request) {
           }),
         },
       );
-
       const generatorAgent = mastra.getAgent("excalidrawGeneratorAgent");
 
       const id = crypto.randomUUID();
@@ -41,13 +45,19 @@ export async function POST(req: Request) {
       });
 
       let currentDrawingPlan = plannerResult.object.drawingPlan;
+      let currentDrawingJSON = drawingJSON
 
+      // Perform the steps for the number of times
       for (let i = 1; i <= plannerResult.object.stepCount; i++) {
         const updated = await generatorAgent.generate(
           [
             {
               role: "user",
-              content: generateDrawingPrompt(prompt, currentDrawingPlan),
+              content: [
+                { type: "text", text: generateDrawingPrompt(prompt, currentDrawingPlan)},
+                { type: "image", image: `data:image/png;base64,${imagebytes}` },
+                { type: "text", text: currentDrawingJSON }
+              ]
             },
           ],
           {
@@ -68,11 +78,12 @@ export async function POST(req: Request) {
         // write the json (temporarily)
         writer.write({
           type: "data-excalidraw-json",
-          data: updated.object.drawingJSON,
+          data: JSON.parse(updated.object.drawingJSON), // JSON 
           transient: true,
         });
 
         currentDrawingPlan = updated.object.updatedDrawingPlan;
+        currentDrawingJSON = updated.object.drawingJSON;
       }
       
       writer.write({
@@ -86,5 +97,11 @@ export async function POST(req: Request) {
 }
 
 function generateDrawingPrompt(initialPrompt: string, drawingPlan: string) {
-  return initialPrompt + "\n\n" + drawingPlan;
+  return `
+    INITIAL PROMPT:
+    ${initialPrompt}
+
+    PLAN:
+    ${drawingPlan}
+  `;
 }
