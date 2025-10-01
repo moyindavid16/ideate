@@ -1,3 +1,7 @@
+Video Links
+https://www.loom.com/share/f55e92112e1d4574a412de91353d0190?sid=8ef4c78c-3651-41bd-b544-7eeae484d08f 
+https://www.loom.com/share/1e839077c51445f08c3dd8a0ab05dd1f?sid=02a2d729-3e01-4597-ae39-9c29f36b605a
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
